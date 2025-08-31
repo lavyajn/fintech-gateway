@@ -84,7 +84,13 @@ const loginMerchant = async (req,res) => {
     }
 };
 
+const getMerchantProfile = async(req,res) => {
+    //the middleware alreadt has the profile of merchant no need to fetch again
+    res.status(200).json(req.merchant);
+}
+
 module.exports = {
     signupMerchant,
     loginMerchant,
+    getMerchantProfile,
 }
