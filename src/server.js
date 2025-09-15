@@ -2,6 +2,7 @@ const express = require ('express');
 const dotenv = require ('dotenv');
 const pool = require ('./config/db.js');
 const merchantRoutes = require('./routes/merchantRoutes.js');
+const paymentRoutes = require('./routes/paymentRoutes.js');
 
 dotenv.config();
 
@@ -26,7 +27,9 @@ const testDbConnection = async () => {
 app.get('/', (req,res) => {
     res.send('Payment Gateway is alive!');
 });
+
 app.use('/api/v1/merchants', merchantRoutes);
+app.use('/api/v1/payments', paymentRoutes);
 
 const startServer = async () => {
 
