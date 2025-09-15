@@ -20,6 +20,7 @@
   "homepage": "https://github.com/lavyajn/fintech-gateway#readme",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "crypto-random-string": "^4.0.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",

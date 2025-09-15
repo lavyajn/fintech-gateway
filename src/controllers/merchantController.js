@@ -1,13 +1,16 @@
 const jwt = require('jsonwebtoken');
+const cryptoRandomString = require('crypto-random-string').default;
 const pool = require('../config/db.js');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt');   
+
+console.log('DEBUGGING cryptoRandomString:', cryptoRandomString); 
 
 const signupMerchant = async (req,res) => {
     try {
-        //Validation
+        //validation
         const {name, email, password} = req.body;
 
-        //Checking for already existing user
+        //checking for already existing user
         if(!name || !password || !email)
             return res.status(400).json({message: 'All fields are required'});
 
@@ -16,17 +19,17 @@ const signupMerchant = async (req,res) => {
             return res.status(409).json({message: 'Email already in use.'});
         }
 
-        //Generate hashed password
+        //generate hashed password
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
-        //Inserting new user into the database
+        //inserting new user into the database
         const newMerchant = await pool.query(
             'INSERT INTO merchants (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id, name, email, created_at',
             [name,email,passwordHash]
         );
         
-        //Sending success response
+        //Sending success message
         res.status(201).json({
             message: 'Merchant is added sucessfully.',
             merchant: newMerchant.rows[0],
@@ -89,8 +92,51 @@ const getMerchantProfile = async(req,res) => {
     res.status(200).json(req.merchant);
 }
 
+const generateApiKeys = async (req, res) => {
+    const merchantId = req.merchant.id;
+
+    try {
+        const publicKey = `pub_key_${cryptoRandomString({length: 24, type: 'alphanumeric'})}`;
+        const secretKey = `sec_key_${cryptoRandomString({length: 48, type: 'alphanumeric'})}`;
+
+        const salt = await bcrypt.genSalt(10);
+        const secretKeyHash = await bcrypt.hash(secretKey, salt);
+
+        const newKey = await pool.query(
+            'INSERT INTO api_keys (merchant_id, public_key, secret_key_hash) VALUES ($1, $2, $3) RETURNING id, public_key',[merchantId, publicKey, secretKeyHash]
+        );
+
+        await pool.query(
+            'UPDATE merchants SET active_api_key_id = $1 WHERE id = $2',
+            [newKey.rows[0].id, merchantId]
+        );
+
+        res.status(201).json({
+            message: 'API keys generated securely.Please save your keys securely.',
+            publicKey: newKey.rows[0].public_key,
+            secretKey: secretKey,
+        }); 
+    }catch(err) {
+        console.error(err);
+        res.status(500).json({message: 'Server error during API key generation.'});
+    }
+};
+
 module.exports = {
     signupMerchant,
     loginMerchant,
     getMerchantProfile,
+    generateApiKeys,
 }
+
+/* {
+    "email": "test@shop.com",
+    "password": "supersecretpassword123"
+} 
+    
+{
+    "message": "API keys generated securely.Please save your keys securely.",
+    "publicKey": "pub_key_Xd9cH8UdLkEhO7VRwf764Uva",
+    "secretKey": "sec_key_CRUE38PcsNIjuucDuzIb77PVfP7YirrCKD1mqkp57dUMFs57"
+}
+*/
