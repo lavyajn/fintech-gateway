@@ -15,7 +15,7 @@ const apiKeyAuth = async (req, res, next) => {
         if(keyResult.rows[0] === 0) {
             return res.status(401).json({ message: 'Invalid API key.' });
         }
-        const apiKeyData = keyResult;
+        const apiKeyData = keyResult.rows[0];
 
         const isMatch = await bcrypt.compare(secretKey, apiKeyData.secret_key_hash);
         if(!isMatch) {
@@ -26,11 +26,11 @@ const apiKeyAuth = async (req, res, next) => {
         next();
     }catch(err) {
         console.error(err);
-        return res.status(500).json({ message: 'Seever error during API key authentication.'})
+        return res.status(500).json({ message: 'Server error during API key authentication.'})
     }
 };
 
 module.exports = {
-    apiKeyAuth,
+    apiKeyAuth, 
 
 }

@@ -3,8 +3,6 @@ const cryptoRandomString = require('crypto-random-string').default;
 const pool = require('../config/db.js');
 const bcrypt = require('bcrypt');   
 
-console.log('DEBUGGING cryptoRandomString:', cryptoRandomString); 
-
 const signupMerchant = async (req,res) => {
     try {
         //validation
@@ -133,10 +131,12 @@ module.exports = {
     "email": "test@shop.com",
     "password": "supersecretpassword123"
 } 
-    
+
+"publicKey": "pub_key_sDDaRCvfJZVMHBmlG85mTYRv",
+    "secretKey": "sec_key_ZBe0hLWFnQksv9GMDZ3maGd9Yg78mOs2rL04OOKtqkQcOckn"
+
 {
-    "message": "API keys generated securely.Please save your keys securely.",
-    "publicKey": "pub_key_Xd9cH8UdLkEhO7VRwf764Uva",
-    "secretKey": "sec_key_CRUE38PcsNIjuucDuzIb77PVfP7YirrCKD1mqkp57dUMFs57"
+    "amount": 50000,
+    "currency": "INR"
 }
 */
