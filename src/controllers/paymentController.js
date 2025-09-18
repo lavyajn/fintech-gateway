@@ -1,4 +1,5 @@
 const pool = require('../config/db.js');
+const { sendWebhook } = require('../controllers/webhookController.js');
 
 const initiatePayment = async (req, res) => {
 
@@ -47,7 +48,7 @@ const processPayment = async (req, res) => {
         
         //checking payment status
         if(payment.status !== 'pending') {
-            return res.status(400).json({ message: 'Payment is already ${payment.status}'});
+            return res.status(400).json({ message: `Payment is already ${payment.status}`});
         }
         
         // processing payment
@@ -58,13 +59,20 @@ const processPayment = async (req, res) => {
         
         // updating paymnet status with respect to the id
         const updatePayment = await pool.query(
-            'UPDATE payments SET status = $1 WHERE id = $2 RETURNING id, status',
+            'UPDATE payments SET status = $1 WHERE id = $2 RETURNING *',
             [newStatus, paymentId]
         );
 
+        // TRIGGER THE WEBHOOK (dont wait for it to finish)
+        sendWebhook(updatePayment.rows[0]);
+
+        // sending back final status
         res.status(200).json({
             message: `Payment ${newStatus}`,
-            payment: updatePayment.rows[0],
+            payment: {
+                id: updatePayment.rows[0].id,
+                status: updatePayment.rows[0].status,
+            }
         });
      }catch(err) {
         console.error(err);

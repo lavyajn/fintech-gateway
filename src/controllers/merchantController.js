@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const cryptoRandomString = require('crypto-random-string').default;
 const pool = require('../config/db.js');
 const bcrypt = require('bcrypt');   
+const { configDotenv } = require('dotenv');
 
 const signupMerchant = async (req,res) => {
     try {
@@ -120,23 +121,63 @@ const generateApiKeys = async (req, res) => {
     }
 };
 
+const configureWebhook = async (req, res) => {
+    const merchantId = req.merchant.id;
+    const { url } = req.body;
+
+    if(!url) {
+        return res.status(400).json({message: 'Webhook url is required.'})
+    }
+    const webhookSecret = `wbhsec_${cryptoRandomString({ length: 32, type: 'alphanumeric'})}`;
+
+    try {
+        await pool.query(
+            'UPDATE merchants SET webhook_url = $1, webhook_secret = $2 WHERE id = $3',
+            [url, webhookSecret, merchantId]
+        );
+
+        res.status(200).json({
+            message: 'Webhook configured successfully. Please save your secret.',
+            webhookSecret: webhookSecret,
+        });
+    }catch(err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Server error during webhook configuration.'})
+    }
+};
+
 module.exports = {
     signupMerchant,
     loginMerchant,
     getMerchantProfile,
     generateApiKeys,
-}
+    configureWebhook,
+} 
 
-/* {
+/* 
+{
     "email": "test@shop.com",
     "password": "supersecretpassword123"
 } 
 
-"publicKey": "pub_key_sDDaRCvfJZVMHBmlG85mTYRv",
-    "secretKey": "sec_key_ZBe0hLWFnQksv9GMDZ3maGd9Yg78mOs2rL04OOKtqkQcOckn"
+{
+    "message": "API keys generated securely.Please save your keys securely.",
+    "publicKey": "pub_key_D8MqbUzmT1akv2FABSsDzDnz",
+    "secretKey": "sec_key_5uFpsFsBzD5vbwJgjebw51YKV24w4D7oZi47RaKxaEsZy9V6"
+}
 
 {
-    "amount": 50000,
+    "amount": 50000,    
     "currency": "INR"
 }
+
+{
+    "cardDetails": {
+        "cardNumber": "4111222233334444",
+        "expiry": "12/29",
+        "cvv": "123"
+    }
+}
+
+"webhookSecret": "wbhsec_vTaiB0HqmjbYB4GU9dLSoYy4R0WepfxM"
 */
